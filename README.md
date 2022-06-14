@@ -38,6 +38,8 @@ La mayoría de los servicios de amazon tienen una lógica liviana, por tanto los
 ## Consideraciones de diseño
 - Data store eventualmente consistente
 - Resolución de conflictos
+	- Aplicación
+	- Data store
 - Always writable
 
 ::: notes
@@ -60,7 +62,7 @@ Se orienta al espacio de diseño de un data store siempre disponible para escrit
 Otros principios de diseño:
 Escalabilidad incremental: Dynamo debe poder escalar de a un nodo, con mínimo impacto en operaciones tanto del sistema como de operadores del sistema.
 Simetría: Todos los nodos de Dynamo deben tener el mismo conjunto de responsabilidades que sus pares. Esto simplifica el proceso de aprovisionamiento y mantenimiento.
-Decentralización: es una extensión de la simétrica, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado.
+Descentralización: es una extensión de la simetría, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado.
 Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la infraestructura sobre la que corre.
 :::
 
