@@ -178,10 +178,11 @@ Distribuir los datos de forma uniforme entre los nodos
 
 ## Versionado de datos
 
-- Consistencia _eventual_ -> Si opero *YA*, genero una inconsistencia entre nodos
-  - Cómo hago un _merge_ de las distintas versiones?
-  - Cada versión es un Vector Clock -> `(nodo, contador)`
+Consistencia _eventual_ -> Si opero *YA*, genero una inconsistencia entre nodos
 
+Cómo hago un _merge_ de las distintas versiones?
+
+\
 
 - Syntactic Reconciliation: Si una versión nueva supera la antigua, simplemente la reemplaza
 - Semantic Reconciliation: Si no hay manera obvia de elegir la versión superadora, el
@@ -189,21 +190,30 @@ Distribuir los datos de forma uniforme entre los nodos
     - Reglas de negocio -> _Shopping Cart_
     - "Last Write Wins" -> _Session Info_
 
-## Versionado de datos
-
-![](./img/versioning.png)
-
 ::: notes
 
 - Si no tengo fallas, la replicación esta acotada en tiempo
 - Si tengo fallas, los updates pueden tardar muucho en aparecer en todas las replicas
-- Es como git: No quiero perder datos nunca. Cómo reconcilio las distintas versiones?
+- Es como git: No quiero perder datos nunca.
+  - Syntactic Reconciliation -> FastForward
+  - Semantic Reconciliation -> Merge a manopla
 - El merge pasa a ser responsabilidad de la capa de aplicación -> todas las aplicaciones son conscientes de que pueden existir muchas versiones de la data
-- Syntactic Reconciliation -> FastForward
-- Semantic Reconciliation -> Merge a manopla
 - Add to Cart -> nunca quiero perder lo que un usuario agregó -> el merge es semántico por regla de negocio
-- Para evitar una lista enorme de vector clocks, el tercer elemento de la tupla es un timestamp que usas para truncar
+:::
 
+
+## Versionado de datos
+
+Una versión? Un Vector Clock!
+
+`(nodo, contador)`
+
+![](./img/versioning.png)
+
+
+::: notes
+- Cada versión es inmutable
+- Para evitar una lista enorme de vector clocks, el tercer elemento de la tupla es un timestamp que usas para truncar
 :::
 
 ## Ejecución de Operaciones
