@@ -42,6 +42,8 @@ Una consideración importante es cuando realizar el proceso de resolución de co
 Se orienta al espacio de diseño de un data store siempre disponible para escrituras.
 :::
 
+\
+
 ### Principios clave
 - Escalabilidad incremental
 - Simetría
@@ -58,16 +60,22 @@ Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la in
 
 # Arquitectura de Sistema
 
-- empezar con la sección 3.3
+"DynamoDB can be characterized as a zero-hop DHT, where each node routes a request to the appropiate node directly"
 
-![](./img/architecture.png)
+![Core Distributed Systems Techniques](./img/architecture.png)
 
 ::: notes
 
-This is my note.
+Inspiradociones: 
+- SistemasP2P
+- File systems distribuidos (ej: google file system)
+- Databases distribuidas (ej: bigtable)
 
-- It can contain Markdown
-- like this list
+Tomar lo bueno, descartar lo malo, buscando cumplir:
+- Always Writeable
+- All nodes are to be trusted
+- No complex relational schemas ni hierarchical namespaces
+- Latency sensitive: 99.9% read/write ops in a few hundred ms
 
 :::
 
@@ -79,26 +87,49 @@ This is my note.
 
 ![](./img/replication.png)
 
-- El coordinador replica a los N-1 siguientes nodos del anillo
+- El coordinador replica a los `N`-1 siguientes nodos del anillo
 
 - Todos los nodos conocen las responsabilidades del resto
 
 - Los datos se distribuyen en nodos físicos, no virtuales
 
+::: notes
+
+- El coordinador es el que esta a cargo del write (y guarda su copia ademas de replicar)
+- N es un parametro configurable
+- La lista de nodos a cargo de guardar una key es la _preference list_ (segundo item: todos los nodos pueden determinar la preference list de todas las keys)
+- Los N nodos sucesores pueden ser virtuales, por eso se implementa un sistema de skipear posiciones, asegurandose que los datos se distribuyan en nodos fisicos
+
+:::
+
 ## Versionado de datos
 
 - Consistencia _eventual_ -> Si opero *YA*, genero una inconsistencia entre nodos
-  - Es como git: No quiero perder datos nunca. Cómo reconcilio las distintas versiones?
+  - Cómo hago un _merge_ de las distintas versiones?
   - Cada versión es un Vector Clock -> `(nodo, contador)`
 
+  
 - Syntactic Reconciliation: Si una versión nueva supera la antigua, simplemente la reemplaza
 - Semantic Reconciliation: Si no hay manera obvia de elegir la versión superadora, el
   cliente decide acorde a sus necesidades de negocio
     - Reglas de negocio -> _Shopping Cart_
     - "Last Write Wins" -> _Session Info_
-    - High Performance Read Engine -> _Product Catalog_
 
 ![](./img/versioning.png)
+
+::: notes
+
+- Si no tengo fallas, la replicación esta acotada en tiempo
+- Si tengo fallas, los updates pueden tardar muucho en aparecer en todas las replicas
+- Es como git: No quiero perder datos nunca. Cómo reconcilio las distintas versiones?
+- El merge pasa a ser responsabilidad de la capa de aplicación -> todas las aplicaciones son conscientes de que pueden existir muchas versiones de la data
+- Syntactic Reconciliation -> FastForward
+- Semantic Reconciliation -> Merge a manopla
+- Add to Cart -> nunca quiero perder lo que un usuario agregó -> el merge es semántico por regla de negocio
+- Para evitar una lista enorme de vector clocks, el tercer elemento de la tupla es un timestamp que usas para truncar
+
+:::
+
 
 ## Manejo de fallas: Hinted Handoff
 ### _Sloppy_ Quorum
@@ -190,6 +221,7 @@ La experiencia operativa demuestra que este enfoque distribuye la carga de clave
 :::
 
 - Confirmation round
+
 ::: notes
 Una ronda de confirmación enter el origen y el destino, se asegura que el nodo de destino no reciba ningún duplicado para un dado rango de claves.
 :::
