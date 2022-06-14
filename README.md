@@ -3,9 +3,13 @@
 
 ## Motivación
 - Query model
+	- Operaciones simples
+	- Costos de un RDBMS
 - Propiedades ACID
+	- Disponibilidad pobre
 - Eficiencia
 - Otras asunciones
+	- No-hostil
 
 ::: notes
 Muchos servicios dentro de Amazon tienen ciertos requisitos para los cuales una DB relacional esta lejos de ser ideal. Por complejidad, costo de mantenimiento, decisiones de diseño.
@@ -177,7 +181,7 @@ Distribuir los datos de forma uniforme entre los nodos
   - Cómo hago un _merge_ de las distintas versiones?
   - Cada versión es un Vector Clock -> `(nodo, contador)`
 
-  
+
 - Syntactic Reconciliation: Si una versión nueva supera la antigua, simplemente la reemplaza
 - Semantic Reconciliation: Si no hay manera obvia de elegir la versión superadora, el
   cliente decide acorde a sus necesidades de negocio
@@ -219,11 +223,11 @@ Distribuir los datos de forma uniforme entre los nodos
   - Enrutar a algún nodo saludable de los primeros N de la lista de preferencia.
 - Dicha información se transmite de nodo a nodo a través de un protocolo de chisme.
 
-::: 
+:::
 
 ## Ejecución de Operaciones
 
-### Resolviendo la Consulta 
+### Resolviendo la Consulta
 
 - Se busca lograr un balance entre performance, availability y durability, que sea configurable
 - Se logra a través de un Sloopy Quorum
@@ -254,7 +258,7 @@ Distribuir los datos de forma uniforme entre los nodos
 - Al disminuir W o R mejora la performance y availability, pero empeora la durability
 - Se juega con estos valores en función de la aplicación y los SLA.
 
-::: 
+:::
 
 # Manejo de fallas: Hinted Handoff
 
