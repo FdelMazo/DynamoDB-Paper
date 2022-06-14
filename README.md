@@ -49,9 +49,7 @@ Una consideración importante es cuando realizar el proceso de resolución de co
 Se orienta al espacio de diseño de un data store siempre disponible para escrituras.
 :::
 
-\
-
-### Principios clave
+## Principios clave
 - Escalabilidad incremental
 - Simetría
 - Decentralización
