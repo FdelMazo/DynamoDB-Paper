@@ -81,7 +81,74 @@ Tomar lo bueno, descartar lo malo, buscando cumplir:
 
 ## Interfaz
 
+- Define dos simples funciones
+  - get(key) -> (object, context)
+  - put(key, context, object) -> ()
+
+
+::: notes
+
+- La funcion get devuelve un contexto
+- El contexto
+  - Es una serie de bytes
+  - Es opaco al usuario
+  - Contiene metadata de la bdd que ayuda a versionado.
+- La función put necesita el contexto para determinar el objeto a retornar
+- Esto es así porque Dynamo almacena objetos inmutables con versionado.
+:::
+
+
 ## Particionado
+
+Distribuir los datos de forma uniforme entre los nodos
+
+\
+
+#### Solución Naive
+
+- Función de hash: H(k) = f(k) % n_nodos_sistema
+- Problema: Al modificar cantidad de nodos hay que recalcular todos los hashes!
+
+\
+
+#### Solución de Dynamo
+
+- Técnica de hashing consistente
+  - Función de hash: H(k) = f(k) % m
+    - m >> n_nodos_sistema
+  - Se ordenan los nodos en una topología de anillo, de forma aleatoria.
+  - Cada nodo administra claves del rango previo
+- Nodos virtuales o tokens
+
+::: notes
+
+- Utilizar un mecanismo similar al de una tabla de hash, atada al número de nodos es poco eficiente.
+- Se usa hashing consistente
+  - El valor de m debe elegirse tal que sea mucho mayor a la cantidad de nodos del sistema
+  - El orden de los nodos en la versión inicial es aleatoria, permitiendo rangos de distinto tamaño.
+  - Si no hay replicación cada nodo almacena únicamente los objetos de su rango previo
+
+:::
+
+## Particionado
+
+<img src="./img/consistent-hashing-physical.png" alt="consistent-hashing-physical" width="600"/>
+
+::: notes
+
+- El espacio de direcciones de la función de hash es de 0 a M
+- Se desea almacenar o leer de un objeto cuya clave K tiene valor de hash 27.
+- El objeto es responsabilidad del nodo B.
+- Si aparece un nodo X entre A y B, entonces B deberá cederle claves de su rango (Entre A y X)
+- Si el nodo B sale, entonces deberá cederle sus claves al nodo C
+
+- Optimización de tokens:
+  - Los nodos que se ven en la imágen pasan a ser virtuales (denominados tokens)
+  - Cada nodo físico del sistema es multiplexado en varios nodos virtuales, se le asignan tokens.
+  - La cantidad de tokens de un nodo depende de sus recursos
+  - Esto mejora la distribución de carga en el sistema.
+
+:::
 
 ## Replicado
 
@@ -130,6 +197,60 @@ Tomar lo bueno, descartar lo malo, buscando cumplir:
 
 :::
 
+## Ejecución de Operaciones
+
+### En Busca del Coordinador
+
+- Cualquier nodo puede recibir peticiones de usuario sobre cualquier clave.
+- Al momento de recibir una petición sobre una clave k, el nodo deberá:
+  - Resolverla únicamente si pertenece a la preference list de dicha clave.
+  - Caso contrario, deberá enrutar a algún nodo saludable de los primeros N de la lista de preferencia.
+- La lista de preferencia se transmite de nodo a nodo a través de un protocolo de chisme.
+
+::: notes
+
+- Cualquier nodo puede recibir peticiones de usuario sobre cualquier clave.
+- Al momento de recibir una petición sobre una clave k, el nodo deberá:
+  - Resolverla únicamente si pertenece a la preference list de dicha clave.
+  - Enrutar a algún nodo saludable de los primeros N de la lista de preferencia.
+- Dicha información se transmite de nodo a nodo a través de un protocolo de chisme.
+
+::: 
+
+## Ejecución de Operaciones
+
+### Resolviendo la Consulta 
+
+- Se busca lograr un balance entre performance, availability y durability, que sea configurable
+- Se logra a través de un Sloopy Quorum
+  - Se configuran dos valores, R y W.
+  - Ante una lectura, R nodos deberán responder antes de darla por finalizada.
+  - Ante una escritura, W nodos deberán responder antes de darla por finalizada.
+- Al recibir una petición, el coordinador:
+  - Resolverá la petición localmente.
+  - Enviará la petición a los primeros N nodos saludables de la preference list.
+  - Esperará a la respuesta de W-1 o R-1 nodos, si se trata de una escritura o lectura.
+  - Responderá al usuario.
+- Al aumentar W se reduce performance y availability, pero mejora durability
+- Al aumentar R se reduce performance y availability, pero mejora consistency.
+- Estos valores se configuran en función de la aplicación y los SLAs
+
+
+::: notes
+
+- Dynamo implementa un Sloppy Quorum para la resolución de peticiones de lectura y escritura.
+- El administrador de la bdd podrá configurar dos valores, R y W.
+- El nodo coordinador de la petición buscará ejecutarla de forma local y luego replicarla para los N nodos de la lista de preferencia
+- Si se trata de una lectura, el nodo coordinador no la dará por finalizada hasta que al menos R-1 nodos le contesten.
+- De forma similar, si se trata de una escritura, esta no culminará hasta que al menos W-1 nodos contesten.
+- Al realizar una lectura, se ejecutará el algoritmo Syntactic Reconciliation.
+- En ambos casos nos encontraremos limitados por la latencia del último nodo en responder, sea de los R-1 o W-1
+- Aumentar o disminuir estos valores implica un tradeoff.
+- Al aumentar W o R no solo se reduce la performance, sino que también puede reducirse la availability
+- Al disminuir W o R mejora la performance y availability, pero empeora la durability
+- Se juega con estos valores en función de la aplicación y los SLA.
+
+::: 
 
 ## Manejo de fallas: Hinted Handoff
 ### _Sloppy_ Quorum
