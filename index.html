@@ -50,7 +50,7 @@ Ventura, Julián - 102391</div></p>
 <h2>Motivación</h2>
 <ul>
 <li>Query model</li>
-<li>Propiedades ACID</li>
+<li>Propiedades <code>ACID</code></li>
 <li>Eficiencia</li>
 <li>Otras asunciones</li>
 </ul>
@@ -281,19 +281,19 @@ Ventura, Julián - 102391</div></p>
 <li>Se busca lograr un balance entre performance, availability y durability, que sea configurable</li>
 <li>Se logra a través de un Sloopy Quorum
 <ul>
-<li>Se configuran dos valores, R y W.</li>
-<li>Ante una lectura, R nodos deberán responder antes de darla por finalizada.</li>
-<li>Ante una escritura, W nodos deberán responder antes de darla por finalizada.</li>
+<li>Se configuran dos valores, <code>R</code> y <code>W</code>.</li>
+<li>Ante una lectura, <code>R</code> nodos deberán responder antes de darla por finalizada.</li>
+<li>Ante una escritura, <code>W</code> nodos deberán responder antes de darla por finalizada.</li>
 </ul></li>
 <li>Al recibir una petición, el coordinador:
 <ul>
 <li>Resolverá la petición localmente.</li>
-<li>Enviará la petición a los primeros N nodos saludables de la preference list.</li>
-<li>Esperará a la respuesta de W-1 o R-1 nodos, si se trata de una escritura o lectura.</li>
+<li>Enviará la petición a los primeros <code>N</code> nodos saludables de la preference list.</li>
+<li>Esperará a la respuesta de <code>W</code>-1 o <code>R</code>-1 nodos, si se trata de una escritura o lectura.</li>
 <li>Responderá al usuario.</li>
 </ul></li>
-<li>Al aumentar W se reduce performance y availability, pero mejora durability</li>
-<li>Al aumentar R se reduce performance y availability, pero mejora consistency.</li>
+<li>Al aumentar <code>W</code> se reduce performance y availability, pero mejora durability</li>
+<li>Al aumentar <code>R</code> se reduce performance y availability, pero mejora consistency.</li>
 <li>Estos valores se configuran en función de la aplicación y los SLAs</li>
 </ul>
 <aside class="notes">
