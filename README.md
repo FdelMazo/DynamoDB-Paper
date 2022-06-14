@@ -3,7 +3,7 @@
 
 ## Motivación
 - Query model
-- Propiedades ACID
+- Propiedades `ACID`
 - Eficiencia
 - Otras asunciones
 
@@ -227,16 +227,16 @@ Distribuir los datos de forma uniforme entre los nodos
 
 - Se busca lograr un balance entre performance, availability y durability, que sea configurable
 - Se logra a través de un Sloopy Quorum
-  - Se configuran dos valores, R y W.
-  - Ante una lectura, R nodos deberán responder antes de darla por finalizada.
-  - Ante una escritura, W nodos deberán responder antes de darla por finalizada.
+  - Se configuran dos valores, `R` y `W`.
+  - Ante una lectura, `R` nodos deberán responder antes de darla por finalizada.
+  - Ante una escritura, `W` nodos deberán responder antes de darla por finalizada.
 - Al recibir una petición, el coordinador:
   - Resolverá la petición localmente.
-  - Enviará la petición a los primeros N nodos saludables de la preference list.
-  - Esperará a la respuesta de W-1 o R-1 nodos, si se trata de una escritura o lectura.
+  - Enviará la petición a los primeros `N` nodos saludables de la preference list.
+  - Esperará a la respuesta de `W`-1 o `R`-1 nodos, si se trata de una escritura o lectura.
   - Responderá al usuario.
-- Al aumentar W se reduce performance y availability, pero mejora durability
-- Al aumentar R se reduce performance y availability, pero mejora consistency.
+- Al aumentar `W` se reduce performance y availability, pero mejora durability
+- Al aumentar `R` se reduce performance y availability, pero mejora consistency.
 - Estos valores se configuran en función de la aplicación y los SLAs
 
 
