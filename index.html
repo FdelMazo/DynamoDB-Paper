@@ -7,12 +7,15 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="./reveal.js/css/reset.css">
   <link rel="stylesheet" href="./reveal.js/css/reveal.css">
-  <style type="text/css">
-      code{white-space: pre-wrap;}
-      span.smallcaps{font-variant: small-caps;}
-      span.underline{text-decoration: underline;}
-      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
   </style>
   <link rel="stylesheet" href="./reveal.js/css/theme/simple.css" id="theme">
   <!-- Printing and PDF exports -->
@@ -38,7 +41,12 @@ Mermet, I. Javier - 98153<br />
 Ventura, Julián - 102391</div></p>
 </section>
 
-<section><section id="dynamo-amazons-highly-available-key-value-store" class="title-slide slide level1"><h1>Dynamo: Amazon’s highly available key-value store</h1></section><section id="motivación" class="slide level2">
+<section>
+<section id="dynamo-amazons-highly-available-key-value-store" class="title-slide slide level1">
+<h1>Dynamo: Amazon’s highly available key-value store</h1>
+<p><img data-src="./img/dynamodb.png" /></p>
+</section>
+<section id="motivación" class="slide level2">
 <h2>Motivación</h2>
 <ul>
 <li>Query model</li>
@@ -53,7 +61,8 @@ Ventura, Julián - 102391</div></p>
 <p>El sistema se diseño en base a la necesidad de ser ejecutado sobre hardware commodity, con requisitos de latencia medidos en el percentil 99.9 de la distribución. Los servicios deben poder configurar Dynamo de modo tal que puedan alcanzar sus requisitos de latencia y throughput.</p>
 <p>El entorno se asume como no-hostil y no hay requisitos de seguridad.</p>
 </aside>
-</section><section id="sla-y-problemas-de-negocio" class="slide level2">
+</section>
+<section id="sla-y-problemas-de-negocio" class="slide level2">
 <h2>SLA y Problemas de negocio</h2>
 <ul>
 <li>99.9th percentile</li>
@@ -63,7 +72,8 @@ Ventura, Julián - 102391</div></p>
 <p>En Amazon, los SLAs se expresan medidos sobre el percentil 99.9, basados en un análisis de costo beneficio.</p>
 <p>La mayoría de los servicios de amazon tienen una lógica liviana, por tanto los sistemas de almacenamiento juegan un rol importante ene establecer su SLA. El componente principal de un sistema se vuelve el manejo del estado. Una de las consideraciones principales de Dynamo es permitir que los servicios tengan control sobre las propiedades del sistema, como durabilidad y consistencia, y dejar que decidan sobre los tradeoffs entre funcionalidad, performance y relación costo-beneficio.</p>
 </aside>
-</section><section id="consideraciones-de-diseño" class="slide level2">
+</section>
+<section id="consideraciones-de-diseño" class="slide level2">
 <h2>Consideraciones de diseño</h2>
 <ul>
 <li>Data store eventualmente consistente</li>
@@ -85,21 +95,44 @@ Ventura, Julián - 102391</div></p>
 <li>Heterogeneidad</li>
 </ul>
 <aside class="notes">
-<p>Otros principios de diseño: Escalabilidad incremental: Dynamo debe poder escalar de a un nodo, con mínimo impacto en operaciones tanto del sistema como de operadores del sistema. Simetría: Todos los nodos de Dynamo deben tener el mismo conjunto de responsabilidades que sus pares. Esto simplifica el proceso de aprovisionamiento y mantenimiento. Decentralización: es una extension de la simétrica, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado. Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la infraestructura sobre la que corre.</p>
+<p>Otros principios de diseño: Escalabilidad incremental: Dynamo debe poder escalar de a un nodo, con mínimo impacto en operaciones tanto del sistema como de operadores del sistema. Simetría: Todos los nodos de Dynamo deben tener el mismo conjunto de responsabilidades que sus pares. Esto simplifica el proceso de aprovisionamiento y mantenimiento. Decentralización: es una extensión de la simétrica, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado. Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la infraestructura sobre la que corre.</p>
 </aside>
 </section></section>
-<section><section id="arquitectura-de-sistema" class="title-slide slide level1"><h1>Arquitectura de Sistema</h1></section><section id="interfaz" class="slide level2">
+<section>
+<section id="arquitectura-de-sistema" class="title-slide slide level1">
+<h1>Arquitectura de Sistema</h1>
+<p>“DynamoDB can be characterized as a zero-hop DHT, where each node routes a request to the appropiate node directly”</p>
+<figure>
+<img data-src="./img/architecture.png" alt="" /><figcaption>Core Distributed Systems Techniques</figcaption>
+</figure>
+<aside class="notes">
+<p>Inspiraciones:</p>
+<ul>
+<li>SistemasP2P</li>
+<li>File systems distribuidos (ej: google file system)</li>
+<li>Databases distribuidas (ej: bigtable)</li>
+</ul>
+<p>Tomar lo bueno, descartar lo malo, buscando cumplir:</p>
+<ul>
+<li>Always Writeable</li>
+<li>All nodes are to be trusted</li>
+<li>No complex relational schemas ni hierarchical namespaces</li>
+<li>Latency sensitive: 99.9% read/write ops in a few hundred ms</li>
+</ul>
+</aside>
+</section>
+<section id="interfaz" class="slide level2">
 <h2>Interfaz</h2>
 <ul>
 <li>Define dos simples funciones
 <ul>
-<li>get(key) -&gt; (object, context)</li>
-<li>put(key, context, object) -&gt; ()</li>
+<li><code>get(key)</code> -&gt; <code>(object, context)</code></li>
+<li><code>put(key, context, object)</code> -&gt; <code>()</code></li>
 </ul></li>
 </ul>
 <aside class="notes">
 <ul>
-<li>La funcion get devuelve un contexto</li>
+<li>La función get devuelve un contexto</li>
 <li>El contexto
 <ul>
 <li>Es una serie de bytes</li>
@@ -110,14 +143,15 @@ Ventura, Julián - 102391</div></p>
 <li>Esto es así porque Dynamo almacena objetos inmutables con versionado.</li>
 </ul>
 </aside>
-</section><section id="particionado" class="slide level2">
+</section>
+<section id="particionado" class="slide level2">
 <h2>Particionado</h2>
 <p>Distribuir los datos de forma uniforme entre los nodos</p>
 <p><br />
 </p>
 <h4 id="solución-naive">Solución Naive</h4>
 <ul>
-<li>Función de hash: H(k) = f(k) % n_nodos_sistema</li>
+<li>Función de hash: <code>H(k) = f(k) % n_nodos_sistema</code></li>
 <li>Problema: Al modificar cantidad de nodos hay que recalcular todos los hashes!</li>
 </ul>
 <p><br />
@@ -126,9 +160,9 @@ Ventura, Julián - 102391</div></p>
 <ul>
 <li>Técnica de hashing consistente
 <ul>
-<li>Función de hash: H(k) = f(k) % m
+<li>Función de hash: <code>H(k) = f(k) % m</code>
 <ul>
-<li>m &gt;&gt; n_nodos_sistema</li>
+<li><code>m</code> &gt;&gt; <code>n_nodos_sistema</code></li>
 </ul></li>
 <li>Se ordenan los nodos en una topología de anillo, de forma aleatoria.</li>
 <li>Cada nodo administra claves del rango previo</li>
@@ -146,26 +180,28 @@ Ventura, Julián - 102391</div></p>
 </ul></li>
 </ul>
 </aside>
-</section><section id="particionado-1" class="slide level2">
+</section>
+<section id="particionado-1" class="slide level2">
 <h2>Particionado</h2>
 <p><img src="./img/consistent-hashing-physical.png" alt="consistent-hashing-physical" width="600"/></p>
 <aside class="notes">
 <ul>
-<li>El espacio de direcciones de la función de hash es de 0 a M</li>
-<li>Se desea almacenar o leer de un objeto cuya clave K tiene valor de hash 27.</li>
-<li>El objeto es responsabilidad del nodo B.</li>
-<li>Si aparece un nodo X entre A y B, entonces B deberá cederle claves de su rango (Entre A y X)</li>
+<li><p>El espacio de direcciones de la función de hash es de 0 a M</p></li>
+<li><p>Se desea almacenar o leer de un objeto cuya clave K tiene valor de hash 27.</p></li>
+<li><p>El objeto es responsabilidad del nodo B.</p></li>
+<li><p>Si aparece un nodo X entre A y B, entonces B deberá cederle claves de su rango (Entre A y X)</p></li>
 <li><p>Si el nodo B sale, entonces deberá cederle sus claves al nodo C</p></li>
-<li>Optimización de tokens:
+<li><p>Optimización de tokens:</p>
 <ul>
-<li>Los nodos que se ven en la imágen pasan a ser virtuales (denominados tokens)</li>
+<li>Los nodos que se ven en la imagen pasan a ser virtuales (denominados tokens)</li>
 <li>Cada nodo físico del sistema es multiplexado en varios nodos virtuales, se le asignan tokens.</li>
 <li>La cantidad de tokens de un nodo depende de sus recursos</li>
 <li>Esto mejora la distribución de carga en el sistema.</li>
 </ul></li>
 </ul>
 </aside>
-</section><section id="replicado" class="slide level2">
+</section>
+<section id="replicado" class="slide level2">
 <h2>Replicado</h2>
 <p><img data-src="./img/replication.png" /></p>
 <ul>
@@ -176,12 +212,13 @@ Ventura, Julián - 102391</div></p>
 <aside class="notes">
 <ul>
 <li>El coordinador es el que esta a cargo del write (y guarda su copia ademas de replicar)</li>
-<li>N es un parametro configurable</li>
+<li>N es un parámetro configurable</li>
 <li>La lista de nodos a cargo de guardar una key es la <em>preference list</em> (segundo item: todos los nodos pueden determinar la preference list de todas las keys)</li>
-<li>Los N nodos sucesores pueden ser virtuales, por eso se implementa un sistema de skipear posiciones, asegurandose que los datos se distribuyan en nodos fisicos</li>
+<li>Los N nodos sucesores pueden ser virtuales, por eso se implementa un sistema de skippear posiciones, asegurandose que los datos se distribuyan en nodos físicos</li>
 </ul>
 </aside>
-</section><section id="versionado-de-datos" class="slide level2">
+</section>
+<section id="versionado-de-datos" class="slide level2">
 <h2>Versionado de datos</h2>
 <ul>
 <li>Consistencia <em>eventual</em> -&gt; Si opero <em>YA</em>, genero una inconsistencia entre nodos
@@ -196,6 +233,9 @@ Ventura, Julián - 102391</div></p>
 <li>“Last Write Wins” -&gt; <em>Session Info</em></li>
 </ul></li>
 </ul>
+</section>
+<section id="versionado-de-datos-1" class="slide level2">
+<h2>Versionado de datos</h2>
 <p><img data-src="./img/versioning.png" /></p>
 <aside class="notes">
 <ul>
@@ -209,15 +249,16 @@ Ventura, Julián - 102391</div></p>
 <li>Para evitar una lista enorme de vector clocks, el tercer elemento de la tupla es un timestamp que usas para truncar</li>
 </ul>
 </aside>
-</section><section id="ejecución-de-operaciones" class="slide level2">
+</section>
+<section id="ejecución-de-operaciones" class="slide level2">
 <h2>Ejecución de Operaciones</h2>
 <h3 id="en-busca-del-coordinador">En Busca del Coordinador</h3>
 <ul>
 <li>Cualquier nodo puede recibir peticiones de usuario sobre cualquier clave.</li>
-<li>Al momento de recibir una petición sobre una clave k, el nodo deberá:
+<li>Al momento de recibir una petición sobre una clave <code>k</code>, el nodo deberá:
 <ul>
 <li>Resolverla únicamente si pertenece a la preference list de dicha clave.</li>
-<li>Caso contrario, deberá enrutar a algún nodo saludable de los primeros N de la lista de preferencia.</li>
+<li>Caso contrario, deberá enrutar a algún nodo saludable de los primeros <code>N</code> de la lista de preferencia.</li>
 </ul></li>
 <li>La lista de preferencia se transmite de nodo a nodo a través de un protocolo de chisme.</li>
 </ul>
@@ -232,7 +273,8 @@ Ventura, Julián - 102391</div></p>
 <li>Dicha información se transmite de nodo a nodo a través de un protocolo de chisme.</li>
 </ul>
 </aside>
-</section><section id="ejecución-de-operaciones-1" class="slide level2">
+</section>
+<section id="ejecución-de-operaciones-1" class="slide level2">
 <h2>Ejecución de Operaciones</h2>
 <h3 id="resolviendo-la-consulta">Resolviendo la Consulta</h3>
 <ul>
@@ -269,107 +311,130 @@ Ventura, Julián - 102391</div></p>
 <li>Se juega con estos valores en función de la aplicación y los SLA.</li>
 </ul>
 </aside>
-</section><section id="manejo-de-fallas-hinted-handoff" class="slide level2">
-<h2>Manejo de fallas: Hinted Handoff</h2>
-<h3 id="sloppy-quorum"><em>Sloppy</em> Quorum</h3>
+</section></section>
+<section>
+<section id="manejo-de-fallas-hinted-handoff" class="title-slide slide level1">
+<h1>Manejo de fallas: Hinted Handoff</h1>
+
+</section>
+<section id="sloppy-quorum" class="slide level2">
+<h2><em>Sloppy</em> Quorum</h2>
 <aside class="notes">
 <p>Si Dynamo usara un enfoque tradicional de quorum, no podría estar disponible durante fallas de servidores o particiones de red. Su durabilidad seria reducida incluso bajo las condiciones mas simples de fallo. Por ello no enfuerza membresía estricta de quorum, usa sloppy quorum: todas las operaciones de lectura y escritura se hacen en los primeros N nodos funcionales de la lista de preferencia. No necesariamente son los primeros N encontrados moviéndose por el anillo de hashing.</p>
 </aside>
-<h3 id="data-center-failure">Data center failure</h3>
+</section>
+<section id="data-center-failure" class="slide level2">
+<h2>Data center failure</h2>
 <aside class="notes">
 <p>Un sistema de almacenamiento altamente disponible tiene que ser capaz de manejar fallas de un data center entero. Dados cortes de electricidad, de enfriamiento, red o desastres naturales.</p>
 </aside>
-<ul>
-<li>Replication across multiple data centers</li>
-</ul>
+</section>
+<section id="replication-across-multiple-data-centers" class="slide level2">
+<h2>Replication across multiple data centers</h2>
 <aside class="notes">
 <p>La lista de preferencia de una clave se construye de modo tal que los nodos de almacenamiento se distribuyen en varios data centers conectados por enlaces de alta velocidad.</p>
 </aside>
-</section><section id="manejo-de-fallas-permanentes-sincronización-de-réplicas" class="slide level2">
-<h2>Manejo de fallas permanentes: Sincronización de réplicas</h2>
-<ul>
-<li>Fallas momentáneas</li>
-</ul>
+</section></section>
+<section>
+<section id="manejo-de-fallas-permanentes-sincronización-de-réplicas" class="title-slide slide level1">
+<h1>Manejo de fallas permanentes: Sincronización de réplicas</h1>
+
+</section>
+<section id="fallas-momentáneas" class="slide level2">
+<h2>Fallas momentáneas</h2>
 <aside class="notes">
 <p>Hinted handoff funciona mejor cuando el churn de membresía del sistema es bajo (es decir, se mantienen dentro del mismo) y las fallas de nodos son momentáneas.</p>
 </aside>
-<ul>
-<li>Protocolo anti-entropía</li>
-</ul>
+</section>
+<section id="protocolo-anti-entropía" class="slide level2">
+<h2>Protocolo anti-entropía</h2>
 <aside class="notes">
 <p>Dynamo implementa un protocolo anti entropía para mantener las replicas sincronizadas, utilizando arboles Merkle para detectar inconsistencias entre replicas mas rápidamente y minimizar la cantidad de data transferida. Cada nodo mantiene un árbol Merkle para cada rango de claves (el set de claves cubiertas por un nodo virtual) que almacena. Permitir que los nodos puedan comparar si las claves dentro de un rango esta actualizadas. Si no, recorren el árbol y y sincronizan adecuadamente. La desventada es que muchas claves cambian cuando un nodo se une o deja el sistema, requiriendo que los arboles se recalculen.</p>
 </aside>
-</section><section id="membresía-y-detección-de-fallas-pertenencia-al-anillo" class="slide level2">
-<h2>Membresía y Detección de fallas: Pertenencia al anillo</h2>
-<ul>
-<li>Mecanismo explicito</li>
-</ul>
+</section></section>
+<section>
+<section id="membresía-y-detección-de-fallas-pertenencia-al-anillo" class="title-slide slide level1">
+<h1>Membresía y Detección de fallas: Pertenencia al anillo</h1>
+
+</section>
+<section id="mecanismo-explicito" class="slide level2">
+<h2>Mecanismo explicito</h2>
 <aside class="notes">
 <p>Las fallas de nodos en Amazon suelen ser momentáneas (fallas o tareas de mantenimiento) y raramente significan una salida permanente. Por tanto, no amerita rebalancear la asignación de particiones o reparación de las replicas que no se pueden alcanzar.</p>
 <p>Por esto, se utiliza un mecanismo explicito para inicia la adición y remoción de nodos de un anillo de Dynamo. UN administrador usa una CLI o el navegador para conectarse a un nodo de Dynamo y enviar un cambio de membresía para unirlo a un anillo o removerlo de un anillo.</p>
 </aside>
-<ul>
-<li>Gossip based protocol</li>
-</ul>
+</section>
+<section id="gossip-based-protocol" class="slide level2">
+<h2>Gossip based protocol</h2>
 <aside class="notes">
 <p>Un protocolo basado en rumores propaga los cambios de membresía y mantiene una vista eventualmente consistente de membresía. Cada nodo contacta un par elegido al azar cada segundo y los dos nodos reconcilian cambios persistidos de historial de cambios de membresía.</p>
 </aside>
-<ul>
-<li>Startup</li>
-</ul>
+</section>
+<section id="startup" class="slide level2">
+<h2>Startup</h2>
 <aside class="notes">
 <p>Cuando un nodo arranca, elige su set de tokens (nodos virtuales en el espacio de hashing consistente) y hace un mapa de nodos a sus token sets. Los mapas de cada nodo se reconcilian durante el mismo intercambio que reconcilia historiales de cambios de membresía. Esto significa que la información de particionado y ubicación también se propagan con el protocolo basado en rumores y cada nodo de almacenamiento esta al tanto de los rangos de tokens que manejan sus pares. Esto permite que cada nodo pueda forwardear una operación de lectura/escritura al conjunto correcto de nodos directamente.</p>
 </aside>
-</section><section id="membresía-y-detección-de-fallas-descubrimiento-externo" class="slide level2">
-<h2>Membresía y Detección de fallas: Descubrimiento externo</h2>
-<ul>
-<li>Anillo lógicamente particionado</li>
-</ul>
+</section></section>
+<section>
+<section id="membresía-y-detección-de-fallas-descubrimiento-externo" class="title-slide slide level1">
+<h1>Membresía y Detección de fallas: Descubrimiento externo</h1>
+
+</section>
+<section id="anillo-lógicamente-particionado" class="slide level2">
+<h2>Anillo lógicamente particionado</h2>
 <aside class="notes">
 <p>Una consecuencia de lo que hablamos recién es que dos nodos pueden considerarse miembros del anillo, y sin embargo ninguno estar al tanto inmediatamente del otro. Para evitar particionados lógicos, algunos nodos de Dynamo tienen el rol de semillas: nodos que se descubren por un mecanismo externo y son conocidos por todos los nodos. Todos los nodos eventualmente reconcilian su membresía con una semilla, entonces los particionados lógicos son altamente improbables. Las semillas se pueden obtener de una configuración estática o de un servicio de configuración. Típicamente son nodos funcionales del anillo de Dynamo.</p>
 </aside>
-</section><section id="membresía-y-detección-de-fallas-detección-de-fallas" class="slide level2">
-<h2>Membresía y Detección de fallas: Detección de fallas</h2>
-<ul>
-<li>Evitar intentos fallidos de comunicación</li>
-</ul>
+</section></section>
+<section>
+<section id="membresía-y-detección-de-fallas-detección-de-fallas" class="title-slide slide level1">
+<h1>Membresía y Detección de fallas: Detección de fallas</h1>
+
+</section>
+<section id="evitar-intentos-fallidos-de-comunicación" class="slide level2">
+<h2>Evitar intentos fallidos de comunicación</h2>
 <aside class="notes">
 <p>En dynamo se utiliza la detección de fallas para evitara intentos de comunicarse con pares no alcanzables durante operaciones de get/put o cuando transfiriendo particiones y hinted replicas. Para evitar comunicaciones fallidas, una noción puramente local de detección de fallas alcanza, utilizando nodos alternativos para servir requests de nodos que se detectan que no responden. Cada tanto, se reintenta a los nodos que no responden. En la ausencia de requests de clientes que generen trafico entre ambos nodos, no necesitan saber si el otro es alcanzable y responde.</p>
 </aside>
-<ul>
-<li>Protocolo de rumores</li>
-</ul>
+</section>
+<section id="protocolo-de-rumores" class="slide level2">
+<h2>Protocolo de rumores</h2>
 <aside class="notes">
 <p>Los protocolos descentralizados de detección de fallas utilizan un protocolo sencillo basado en rumores que permite que cada nodo en el sistema aprenda sobre la llegada o salida de los otros nodos.</p>
 </aside>
-</section><section id="agregando-y-removiendo-nodos-de-almacenamiento" class="slide level2">
-<h2>Agregando y removiendo nodos de almacenamiento</h2>
-<ul>
-<li>Asignación de tokens</li>
-</ul>
+</section></section>
+<section>
+<section id="agregando-y-removiendo-nodos-de-almacenamiento" class="title-slide slide level1">
+<h1>Agregando y removiendo nodos de almacenamiento</h1>
+
+</section>
+<section id="asignación-de-tokens" class="slide level2">
+<h2>Asignación de tokens</h2>
 <aside class="notes">
 <p>Cuando un nodo se agrega al sistema, se le asigna una cantidad de tokens distribuidos al azar en el anillo. Por cada rango de claves que se le asigna al nodo, puede haber una cantidad de nodos menor o igual a N que actualmente manejan las claves que caen dentro de ese rango. Dada la asignación de rangos de claves al nuevo nodo, algunos nodos existentes no tienen mas algunas de sus claves y deben transferirlas al nuevo nodo.</p>
 <p>Cuando un nodo se elimina del sistema, la resignación de claves sucede en un proceso inverso.</p>
 </aside>
-<ul>
-<li>Distribución uniforme en los nodos</li>
-</ul>
+</section>
+<section id="distribución-uniforme-en-los-nodos" class="slide level2">
+<h2>Distribución uniforme en los nodos</h2>
 <aside class="notes">
 <p>La experiencia operativa demuestra que este enfoque distribuye la carga de claves uniformemente entre los nodos de almacenamiento. Esto permite cumplir los requisitos de latencia y bootstrapping rápido.</p>
 </aside>
-<ul>
-<li>Confirmation round</li>
-</ul>
+</section>
+<section id="confirmation-round" class="slide level2">
+<h2>Confirmation round</h2>
 <aside class="notes">
 <p>Una ronda de confirmación enter el origen y el destino, se asegura que el nodo de destino no reciba ningún duplicado para un dado rango de claves.</p>
 </aside>
-</section><section id="handlear-errores" class="slide level2">
-<h2>Handlear errores</h2>
 </section></section>
+<section id="preguntas" class="title-slide slide level1">
+<h1>¿Preguntas?</h1>
+
+</section>
     </div>
   </div>
 
-  <script src="./reveal.js/lib/js/head.min.js"></script>
   <script src="./reveal.js/js/reveal.js"></script>
 
   <script>

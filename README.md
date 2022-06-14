@@ -54,7 +54,7 @@ Se orienta al espacio de diseño de un data store siempre disponible para escrit
 Otros principios de diseño:
 Escalabilidad incremental: Dynamo debe poder escalar de a un nodo, con mínimo impacto en operaciones tanto del sistema como de operadores del sistema.
 Simetría: Todos los nodos de Dynamo deben tener el mismo conjunto de responsabilidades que sus pares. Esto simplifica el proceso de aprovisionamiento y mantenimiento.
-Decentralización: es una extension de la simétrica, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado.
+Decentralización: es una extensión de la simétrica, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado.
 Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la infraestructura sobre la que corre.
 :::
 
@@ -84,13 +84,13 @@ Tomar lo bueno, descartar lo malo, buscando cumplir:
 ## Interfaz
 
 - Define dos simples funciones
-  - get(key) -> (object, context)
-  - put(key, context, object) -> ()
+  - `get(key)` -> `(object, context)`
+  - `put(key, context, object)` -> `()`
 
 
 ::: notes
 
-- La funcion get devuelve un contexto
+- La función get devuelve un contexto
 - El contexto
   - Es una serie de bytes
   - Es opaco al usuario
@@ -108,7 +108,7 @@ Distribuir los datos de forma uniforme entre los nodos
 
 #### Solución Naive
 
-- Función de hash: H(k) = f(k) % n_nodos_sistema
+- Función de hash: `H(k) = f(k) % n_nodos_sistema`
 - Problema: Al modificar cantidad de nodos hay que recalcular todos los hashes!
 
 \
@@ -116,8 +116,8 @@ Distribuir los datos de forma uniforme entre los nodos
 #### Solución de Dynamo
 
 - Técnica de hashing consistente
-  - Función de hash: H(k) = f(k) % m
-    - m >> n_nodos_sistema
+  - Función de hash: `H(k) = f(k) % m`
+    - `m` >> `n_nodos_sistema`
   - Se ordenan los nodos en una topología de anillo, de forma aleatoria.
   - Cada nodo administra claves del rango previo
 - Nodos virtuales o tokens
@@ -145,7 +145,7 @@ Distribuir los datos de forma uniforme entre los nodos
 - Si el nodo B sale, entonces deberá cederle sus claves al nodo C
 
 - Optimización de tokens:
-  - Los nodos que se ven en la imágen pasan a ser virtuales (denominados tokens)
+  - Los nodos que se ven en la imagen pasan a ser virtuales (denominados tokens)
   - Cada nodo físico del sistema es multiplexado en varios nodos virtuales, se le asignan tokens.
   - La cantidad de tokens de un nodo depende de sus recursos
   - Esto mejora la distribución de carga en el sistema.
@@ -165,9 +165,9 @@ Distribuir los datos de forma uniforme entre los nodos
 ::: notes
 
 - El coordinador es el que esta a cargo del write (y guarda su copia ademas de replicar)
-- N es un parametro configurable
+- N es un parámetro configurable
 - La lista de nodos a cargo de guardar una key es la _preference list_ (segundo item: todos los nodos pueden determinar la preference list de todas las keys)
-- Los N nodos sucesores pueden ser virtuales, por eso se implementa un sistema de skipear posiciones, asegurandose que los datos se distribuyan en nodos fisicos
+- Los N nodos sucesores pueden ser virtuales, por eso se implementa un sistema de skippear posiciones, asegurandose que los datos se distribuyan en nodos físicos
 
 :::
 
@@ -183,6 +183,8 @@ Distribuir los datos de forma uniforme entre los nodos
   cliente decide acorde a sus necesidades de negocio
     - Reglas de negocio -> _Shopping Cart_
     - "Last Write Wins" -> _Session Info_
+
+## Versionado de datos
 
 ![](./img/versioning.png)
 
@@ -204,9 +206,9 @@ Distribuir los datos de forma uniforme entre los nodos
 ### En Busca del Coordinador
 
 - Cualquier nodo puede recibir peticiones de usuario sobre cualquier clave.
-- Al momento de recibir una petición sobre una clave k, el nodo deberá:
+- Al momento de recibir una petición sobre una clave `k`, el nodo deberá:
   - Resolverla únicamente si pertenece a la preference list de dicha clave.
-  - Caso contrario, deberá enrutar a algún nodo saludable de los primeros N de la lista de preferencia.
+  - Caso contrario, deberá enrutar a algún nodo saludable de los primeros `N` de la lista de preferencia.
 - La lista de preferencia se transmite de nodo a nodo a través de un protocolo de chisme.
 
 ::: notes
@@ -254,41 +256,45 @@ Distribuir los datos de forma uniforme entre los nodos
 
 ::: 
 
-## Manejo de fallas: Hinted Handoff
-### _Sloppy_ Quorum
+# Manejo de fallas: Hinted Handoff
+
+## _Sloppy_ Quorum
+
 
 ::: notes
 Si Dynamo usara un enfoque tradicional de quorum, no podría estar disponible durante fallas de servidores o particiones de red. Su durabilidad seria reducida incluso bajo las condiciones mas simples de fallo. Por ello no enfuerza membresía estricta de quorum, usa sloppy quorum: todas las operaciones de lectura y escritura se hacen en los primeros N nodos funcionales de la lista de preferencia. No necesariamente son los primeros N encontrados moviéndose por el anillo de hashing.
 
 :::
 
-### Data center failure
+## Data center failure
 
 ::: notes
 Un sistema de almacenamiento altamente disponible tiene que ser capaz de manejar fallas de un data center entero. Dados cortes de electricidad, de enfriamiento, red o desastres naturales.
 :::
 
-- Replication across multiple data centers
+## Replication across multiple data centers
 
 ::: notes
 La lista de preferencia de una clave se construye de modo tal que los nodos de almacenamiento se distribuyen en varios data centers conectados por enlaces de alta velocidad.
 :::
 
-## Manejo de fallas permanentes: Sincronización de réplicas
-- Fallas momentáneas
+# Manejo de fallas permanentes: Sincronización de réplicas
+
+## Fallas momentáneas
 
 ::: notes
 Hinted handoff funciona mejor cuando el churn de membresía del sistema es bajo (es decir, se mantienen dentro del mismo) y las fallas de nodos son momentáneas.
 :::
 
-- Protocolo anti-entropía
+## Protocolo anti-entropía
 
 ::: notes
 Dynamo implementa un protocolo anti entropía para mantener las replicas sincronizadas, utilizando arboles Merkle para detectar inconsistencias entre replicas mas rápidamente y minimizar la cantidad de data transferida. Cada nodo mantiene un árbol Merkle para cada rango de claves (el set de claves cubiertas por un nodo virtual) que almacena. Permitir que los nodos puedan comparar si las claves dentro de un rango esta actualizadas. Si no, recorren el árbol y y sincronizan adecuadamente. La desventada es que muchas claves cambian cuando un nodo se une o deja el sistema, requiriendo que los arboles se recalculen.
 :::
 
-## Membresía y Detección de fallas: Pertenencia al anillo
-- Mecanismo explicito
+# Membresía y Detección de fallas: Pertenencia al anillo
+
+## Mecanismo explicito
 
 ::: notes
 Las fallas de nodos en Amazon suelen ser momentáneas (fallas o tareas de mantenimiento) y raramente significan una salida permanente. Por tanto, no amerita rebalancear la asignación de particiones o reparación de las replicas que no se pueden alcanzar.
@@ -296,40 +302,43 @@ Las fallas de nodos en Amazon suelen ser momentáneas (fallas o tareas de manten
 Por esto, se utiliza un mecanismo explicito para inicia la adición y remoción de nodos de un anillo de Dynamo. UN administrador usa una CLI o el navegador para conectarse a un nodo de Dynamo y enviar un cambio de membresía para unirlo a un anillo o removerlo de un anillo.
 :::
 
-- Gossip based protocol
+## Gossip based protocol
 
 ::: notes
 Un protocolo basado en rumores propaga los cambios de membresía y mantiene una vista eventualmente consistente de membresía. Cada nodo contacta un par elegido al azar cada segundo y los dos nodos reconcilian cambios persistidos de historial de cambios de membresía.
 :::
 
-- Startup
+## Startup
 
 ::: notes
 Cuando un nodo arranca, elige su set de tokens (nodos virtuales en el espacio de hashing consistente) y hace un mapa de nodos a sus token sets. Los mapas de cada nodo se reconcilian durante el mismo intercambio que reconcilia historiales de cambios de membresía. Esto significa que la información de particionado y ubicación también se propagan con el protocolo basado en rumores y cada nodo de almacenamiento esta al tanto de los rangos de tokens que manejan sus pares. Esto permite que cada nodo pueda forwardear una operación de lectura/escritura al conjunto correcto de nodos directamente.
 :::
 
-## Membresía y Detección de fallas: Descubrimiento externo
-- Anillo lógicamente particionado
+# Membresía y Detección de fallas: Descubrimiento externo
+
+## Anillo lógicamente particionado
 
 ::: notes
 Una consecuencia de lo que hablamos recién es que dos nodos pueden considerarse miembros del anillo, y sin embargo ninguno estar al tanto inmediatamente del otro. Para evitar particionados lógicos, algunos nodos de Dynamo tienen el rol de semillas: nodos que se descubren por un mecanismo externo y son conocidos por todos los nodos. Todos los nodos eventualmente reconcilian su membresía con una semilla, entonces los particionados lógicos son altamente improbables. Las semillas se pueden obtener de una configuración estática o de un servicio de configuración. Típicamente son nodos funcionales del anillo de Dynamo.
 :::
 
-## Membresía y Detección de fallas: Detección de fallas
-- Evitar intentos fallidos de comunicación
+# Membresía y Detección de fallas: Detección de fallas
+
+## Evitar intentos fallidos de comunicación
 
 ::: notes
 En dynamo se utiliza la detección de fallas para evitara intentos de comunicarse con pares no alcanzables durante operaciones de get/put o cuando transfiriendo particiones y hinted replicas. Para evitar comunicaciones fallidas, una noción puramente local de detección de fallas alcanza, utilizando nodos alternativos para servir requests de nodos que se detectan que no responden. Cada tanto, se reintenta a los nodos que no responden. En la ausencia de requests de clientes que generen trafico entre ambos nodos, no necesitan saber si el otro es alcanzable y responde.
 :::
 
-- Protocolo de rumores
+## Protocolo de rumores
 
 ::: notes
 Los protocolos descentralizados de detección de fallas utilizan un protocolo sencillo basado en rumores que permite que cada nodo en el sistema aprenda sobre la llegada o salida de los otros nodos.
 :::
 
-## Agregando y removiendo nodos de almacenamiento
-- Asignación de tokens
+# Agregando y removiendo nodos de almacenamiento
+
+## Asignación de tokens
 
 ::: notes
 Cuando un nodo se agrega al sistema, se le asigna una cantidad de tokens distribuidos al azar en el anillo. Por cada rango de claves que se le asigna al nodo, puede haber una cantidad de nodos menor o igual a N que actualmente manejan las claves que caen dentro de ese rango. Dada la asignación de rangos de claves al nuevo nodo, algunos nodos existentes no tienen mas algunas de sus claves y deben transferirlas al nuevo nodo.
@@ -337,16 +346,16 @@ Cuando un nodo se agrega al sistema, se le asigna una cantidad de tokens distrib
 Cuando un nodo se elimina del sistema, la resignación de claves sucede en un proceso inverso.
 :::
 
-- Distribución uniforme en los nodos
+## Distribución uniforme en los nodos
 
 ::: notes
 La experiencia operativa demuestra que este enfoque distribuye la carga de claves uniformemente entre los nodos de almacenamiento. Esto permite cumplir los requisitos de latencia y bootstrapping rápido.
 :::
 
-- Confirmation round
+## Confirmation round
 
 ::: notes
 Una ronda de confirmación enter el origen y el destino, se asegura que el nodo de destino no reciba ningún duplicado para un dado rango de claves.
 :::
 
-## Handlear errores
+# ¿Preguntas?
