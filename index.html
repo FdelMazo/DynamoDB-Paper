@@ -54,11 +54,10 @@ Ventura, Julián - 102391</div></p>
 <li>Operaciones simples</li>
 <li>Costos asociados a un RDBMS</li>
 </ul></li>
-<li>Propiedades ACID
+<li>Propiedades <code>ACID</code>
 <ul>
 <li>Disponibilidad pobre</li>
 </ul></li>
-<li>Propiedades <code>ACID</code></li>
 <li>Eficiencia</li>
 <li>Otras asunciones
 <ul>
@@ -77,7 +76,10 @@ Ventura, Julián - 102391</div></p>
 <h2>SLA y Problemas de negocio</h2>
 <ul>
 <li>99.9th percentile</li>
-<li>Lógica liviana</li>
+<li>Lógica liviana
+<ul>
+<li>Rol importante de los Data Stores</li>
+</ul></li>
 </ul>
 <aside class="notes">
 <p>En Amazon, los SLAs se expresan medidos sobre el percentil 99.9, basados en un análisis de costo beneficio.</p>
@@ -88,7 +90,11 @@ Ventura, Julián - 102391</div></p>
 <h2>Consideraciones de diseño</h2>
 <ul>
 <li>Data store eventualmente consistente</li>
-<li>Resolución de conflictos</li>
+<li>Resolución de conflictos
+<ul>
+<li>Aplicación</li>
+<li>Data store</li>
+</ul></li>
 <li>Always writable</li>
 </ul>
 <aside class="notes">
@@ -96,9 +102,9 @@ Ventura, Julián - 102391</div></p>
 <p>Una consideración importante es cuando realizar el proceso de resolución de conflictos de actualización. También el quien: el data store o la aplicación. El data store tiene opciones limitadas, se utiliza una sencilla como “gana la ultima escritura”. Las aplicaciones conocen mejor el esquema de datos.</p>
 <p>Se orienta al espacio de diseño de un data store siempre disponible para escrituras.</p>
 </aside>
-<p><br />
-</p>
-<h3 id="principios-clave">Principios clave</h3>
+</section>
+<section id="principios-clave" class="slide level2">
+<h2>Principios clave</h2>
 <ul>
 <li>Escalabilidad incremental</li>
 <li>Simetría</li>
@@ -106,7 +112,7 @@ Ventura, Julián - 102391</div></p>
 <li>Heterogeneidad</li>
 </ul>
 <aside class="notes">
-<p>Otros principios de diseño: Escalabilidad incremental: Dynamo debe poder escalar de a un nodo, con mínimo impacto en operaciones tanto del sistema como de operadores del sistema. Simetría: Todos los nodos de Dynamo deben tener el mismo conjunto de responsabilidades que sus pares. Esto simplifica el proceso de aprovisionamiento y mantenimiento. Decentralización: es una extensión de la simétrica, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado. Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la infraestructura sobre la que corre.</p>
+<p>Otros principios de diseño: Escalabilidad incremental: Dynamo debe poder escalar de a un nodo, con mínimo impacto en operaciones tanto del sistema como de operadores del sistema. Simetría: Todos los nodos de Dynamo deben tener el mismo conjunto de responsabilidades que sus pares. Esto simplifica el proceso de aprovisionamiento y mantenimiento. Descentralización: es una extensión de la simetría, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado. Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la infraestructura sobre la que corre.</p>
 </aside>
 </section></section>
 <section>
@@ -288,7 +294,7 @@ Ventura, Julián - 102391</div></p>
 <h3 id="resolviendo-la-consulta">Resolviendo la Consulta</h3>
 <ul>
 <li>Se busca lograr un balance entre performance, availability y durability, que sea configurable</li>
-<li>Se logra a través de un Sloopy Quorum
+<li>Se logra a través de un <em>Sloppy Quorum</em>
 <ul>
 <li>Se configuran dos valores, <code>R</code> y <code>W</code>.</li>
 <li>Ante una lectura, <code>R</code> nodos deberán responder antes de darla por finalizada.</li>
@@ -357,6 +363,14 @@ Ventura, Julián - 102391</div></p>
 </section>
 <section id="protocolo-anti-entropía" class="slide level2">
 <h2>Protocolo anti-entropía</h2>
+<ul>
+<li>Arboles Merkle
+<ul>
+<li>Detección de inconsistencias</li>
+<li>Minimizar transferencia de datos</li>
+<li>Nodos que dejan o se unen</li>
+</ul></li>
+</ul>
 <aside class="notes">
 <p>Dynamo implementa un protocolo anti entropía para mantener las replicas sincronizadas, utilizando arboles Merkle para detectar inconsistencias entre replicas mas rápidamente y minimizar la cantidad de data transferida. Cada nodo mantiene un árbol Merkle para cada rango de claves (el set de claves cubiertas por un nodo virtual) que almacena. Permitir que los nodos puedan comparar si las claves dentro de un rango esta actualizadas. Si no, recorren el árbol y y sincronizan adecuadamente. La desventada es que muchas claves cambian cuando un nodo se une o deja el sistema, requiriendo que los arboles se recalculen.</p>
 </aside>
@@ -439,7 +453,7 @@ Ventura, Julián - 102391</div></p>
 </section></section>
 <section id="preguntas" class="title-slide slide level1">
 <h1>¿Preguntas?</h1>
-
+<p><img data-src="./img/questions.png" /></p>
 </section>
     </div>
   </div>

@@ -231,7 +231,7 @@ Distribuir los datos de forma uniforme entre los nodos
 ### Resolviendo la Consulta
 
 - Se busca lograr un balance entre performance, availability y durability, que sea configurable
-- Se logra a través de un Sloopy Quorum
+- Se logra a través de un _Sloppy Quorum_
   - Se configuran dos valores, `R` y `W`.
   - Ante una lectura, `R` nodos deberán responder antes de darla por finalizada.
   - Ante una escritura, `W` nodos deberán responder antes de darla por finalizada.
@@ -368,3 +368,5 @@ Una ronda de confirmación enter el origen y el destino, se asegura que el nodo 
 :::
 
 # ¿Preguntas?
+
+![](./img/questions.png)
