@@ -187,7 +187,7 @@ Cómo hago un _merge_ de las distintas versiones?
 
 - Syntactic Reconciliation: Si una versión nueva supera la antigua, simplemente la reemplaza
 - Semantic Reconciliation: Si no hay manera obvia de elegir la versión superadora, el
-  cliente decide acorde a sus necesidades de negocio
+  cliente decide qué hacer
     - Reglas de negocio -> _Shopping Cart_
     - "Last Write Wins" -> _Session Info_
 
