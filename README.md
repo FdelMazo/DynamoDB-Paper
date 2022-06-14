@@ -67,7 +67,7 @@ Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la in
 
 "DynamoDB can be characterized as a zero-hop DHT, where each node routes a request to the appropiate node directly"
 
-![Core Distributed Systems Techniques](./img/architecture.png)
+<img src="./img/architecture.png" alt="architecture" width="450"/>
 
 ::: notes
 
