@@ -27,6 +27,7 @@ El entorno se asume como no-hostil y no hay requisitos de seguridad.
 ## SLA y Problemas de negocio
 - 99.9th percentile
 - Lógica liviana
+	- Rol importante de los Data Stores
 
 ::: notes
 En Amazon, los SLAs se expresan medidos sobre el percentil 99.9, basados en un análisis de costo beneficio.
