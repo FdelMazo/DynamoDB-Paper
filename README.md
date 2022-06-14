@@ -66,12 +66,14 @@ Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la in
 
 ::: notes
 
-Inspiradociones: 
+Inspiraciones:
+
 - SistemasP2P
 - File systems distribuidos (ej: google file system)
 - Databases distribuidas (ej: bigtable)
 
 Tomar lo bueno, descartar lo malo, buscando cumplir:
+
 - Always Writeable
 - All nodes are to be trusted
 - No complex relational schemas ni hierarchical namespaces
