@@ -49,10 +49,21 @@ Ventura, Julián - 102391</div></p>
 <section id="motivación" class="slide level2">
 <h2>Motivación</h2>
 <ul>
-<li>Query model</li>
+<li>Query model
+<ul>
+<li>Operaciones simples</li>
+<li>Costos asociados a un RDBMS</li>
+</ul></li>
+<li>Propiedades ACID
+<ul>
+<li>Disponibilidad pobre</li>
+</ul></li>
 <li>Propiedades <code>ACID</code></li>
 <li>Eficiencia</li>
-<li>Otras asunciones</li>
+<li>Otras asunciones
+<ul>
+<li>No-hostil</li>
+</ul></li>
 </ul>
 <aside class="notes">
 <p>Muchos servicios dentro de Amazon tienen ciertos requisitos para los cuales una DB relacional esta lejos de ser ideal. Por complejidad, costo de mantenimiento, decisiones de diseño.</p>
@@ -102,9 +113,7 @@ Ventura, Julián - 102391</div></p>
 <section id="arquitectura-de-sistema" class="title-slide slide level1">
 <h1>Arquitectura de Sistema</h1>
 <p>“DynamoDB can be characterized as a zero-hop DHT, where each node routes a request to the appropiate node directly”</p>
-<figure>
-<img data-src="./img/architecture.png" alt="" /><figcaption>Core Distributed Systems Techniques</figcaption>
-</figure>
+<p><img src="./img/architecture.png" alt="architecture" width="450"/></p>
 <aside class="notes">
 <p>Inspiraciones:</p>
 <ul>
