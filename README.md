@@ -27,6 +27,14 @@ El entorno se asume como no-hostil y no hay requisitos de seguridad.
 - 99.9th percentile
 - Lógica liviana
 	- Rol importante de los Data Stores
+	- Manejo del estado
+- Control
+	- Durabilidad
+	- Consistencia
+- Tradeoffs
+	- Funcionalidad
+	- Performance
+	- Costo-beneficio
 
 ::: notes
 En Amazon, los SLAs se expresan medidos sobre el percentil 99.9, basados en un análisis de costo beneficio.
