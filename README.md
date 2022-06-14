@@ -57,10 +57,11 @@ Se orienta al espacio de diseño de un data store siempre disponible para escrit
 
 ::: notes
 Otros principios de diseño:
-Escalabilidad incremental: Dynamo debe poder escalar de a un nodo, con mínimo impacto en operaciones tanto del sistema como de operadores del sistema.
-Simetría: Todos los nodos de Dynamo deben tener el mismo conjunto de responsabilidades que sus pares. Esto simplifica el proceso de aprovisionamiento y mantenimiento.
-Descentralización: es una extensión de la simetría, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado.
-Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la infraestructura sobre la que corre.
+
+- Escalabilidad incremental: Dynamo debe poder escalar de a un nodo, con mínimo impacto en operaciones tanto del sistema como de operadores del sistema.
+- Simetría: Todos los nodos de Dynamo deben tener el mismo conjunto de responsabilidades que sus pares. Esto simplifica el proceso de aprovisionamiento y mantenimiento.
+- Descentralización: es una extensión de la simetría, el diseño debe favorecer técnicas descentralizadas par-a-par por sobre un control centralizado.
+- Heterogeneidad: El sistema debe ser capaz de explotar la heterogeneidad de la infraestructura sobre la que corre.
 :::
 
 # Arquitectura de Sistema
