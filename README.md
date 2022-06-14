@@ -5,9 +5,8 @@
 - Query model
 	- Operaciones simples
 	- Costos asociados a un RDBMS
-- Propiedades ACID
-	- Disponibilidad pobre
 - Propiedades `ACID`
+	- Disponibilidad pobre
 - Eficiencia
 - Otras asunciones
 	- No-hostil
@@ -295,6 +294,10 @@ Hinted handoff funciona mejor cuando el churn de membresía del sistema es bajo 
 :::
 
 ## Protocolo anti-entropía
+- Arboles Merkle
+	- Detección de inconsistencias
+	- Minimizar transferencia de datos
+	- Nodos que dejan o se unen
 
 ::: notes
 Dynamo implementa un protocolo anti entropía para mantener las replicas sincronizadas, utilizando arboles Merkle para detectar inconsistencias entre replicas mas rápidamente y minimizar la cantidad de data transferida. Cada nodo mantiene un árbol Merkle para cada rango de claves (el set de claves cubiertas por un nodo virtual) que almacena. Permitir que los nodos puedan comparar si las claves dentro de un rango esta actualizadas. Si no, recorren el árbol y y sincronizan adecuadamente. La desventada es que muchas claves cambian cuando un nodo se une o deja el sistema, requiriendo que los arboles se recalculen.
